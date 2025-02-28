@@ -73,8 +73,11 @@ jobs:
 
       - name: Transform Input Version
         run: |
+          echo "Original version: ${{ inputs.version }}"
           CHART_VERSION=$(echo "${{ inputs.version }}" | tr '-' '.')
+          echo "Transformed version: $CHART_VERSION"
           echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
+
           
       - name: Create and Checkout Release Branch
         run: |
