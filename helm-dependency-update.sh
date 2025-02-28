@@ -32,7 +32,7 @@ while IFS= read -r chart_info; do
     # Extract repo name from URL (e.g., "bitnami" from "https://charts.bitnami.com/bitnami")
     REPO_NAME=$(basename "$CHART_REPO")
 
-    # Add the repo dynamically
+    # Add the repo dynamically if missing
     if ! helm repo list | grep -q "$REPO_NAME"; then
         echo "📦 Adding Helm repo: $REPO_NAME -> $CHART_REPO"
         helm repo add "$REPO_NAME" "$CHART_REPO"
@@ -41,19 +41,13 @@ while IFS= read -r chart_info; do
     # Update repo before fetching
     helm repo update >/dev/null 2>&1
 
-    echo "🔄 Updating dependency: $CHART_NAME (Version: $CHART_VERSION) from $CHART_REPO"
-    
-    if ! helm upgrade --install "$CHART_NAME" "$REPO_NAME/$CHART_NAME" --version "$CHART_VERSION"; then
-        echo "🚨 Failed to update dependency: $CHART_NAME (Version: $CHART_VERSION)"
-        FAILING_CHARTS+=("$CHART_NAME")
-    else
-        echo "✅ Successfully updated: $CHART_NAME (Version: $CHART_VERSION)"
-    fi
 done <<< "$CHARTS"
 
-if [[ ${#FAILING_CHARTS[@]} -gt 0 ]]; then
-    echo "🚨 The following dependencies failed to update: ${FAILING_CHARTS[*]}"
+# Run `helm dependency update` to fetch dependencies
+echo "📥 Running 'helm dependency update'..."
+if ! helm dependency update; then
+    echo "🚨 Failed to update dependencies"
     exit 1
 else
-    echo "✅ All dependencies updated successfully!"
+    echo "✅ Helm dependencies updated successfully!"
 fi
