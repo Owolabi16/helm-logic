@@ -8,20 +8,22 @@ description: "A barebones release workflow action"
 on:
   push:
     branches:
-      - master  
+      - master 
+
+  workflow_dispatch:
+    inputs:
+      version:  # TODO: This input can be automated in the future to reduce cognitive load on developers
+        description: "The version of the chart to release (in format platform---*)."
+        required: true 
 
 jobs:
   build_chart_workflow:
     runs-on: ubuntu-latest
 
-    inputs:
-      version:  # TODO: This input can be automated in the future to reduce cognitive load on developers
-        description: "The version of the chart to release (in format platform---*)."
-        required: true
-
     outputs:
-      version:
+      version: 
         description: "The version of the chart that was released"
+        value: ${{ inputs.version }}
 
     steps:
       - name: Release Platform
