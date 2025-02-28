@@ -49,7 +49,7 @@ jobs:
 
   commit_and_release:
     runs-on: ubuntu-latest
-    needs: build_chart_workflow  # Ensure charts are built before committing
+    needs: build_chart_workflow
 
     steps:
       - name: Checkout Repository
@@ -64,7 +64,7 @@ jobs:
 
       - name: Commit Helm Chart Updates
         run: |
-          git add Chart.lock Chart.yaml
+          git add Chart.yaml
           git commit -m "chore: update Helm dependencies"
           git push origin master
 
