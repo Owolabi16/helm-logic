@@ -5,21 +5,14 @@ type: application
 version: 0.5.0
 dependencies:
   - name: nginx
-    version: "15.15.1"  # Check for latest version
+    version: "15.15.1"
     repository: "https://charts.bitnami.com/bitnami"
-    condition: nginx.enabled
-
-  - name: prometheus  # Telemetry for metrics
-    version: "25.12.0"  # Check for latest version
+  - name: prometheus
+    version: "25.12.0"
     repository: "https://prometheus-community.github.io/helm-charts"
-    condition: telemetry.enabled
-
-  - name: jaeger  # Telemetry for tracing
-    version: "0.71.6"  # Check for latest version
+  - name: jaeger
+    version: "0.71.6"
     repository: "https://jaegertracing.github.io/helm-charts"
-    condition: telemetry.enabled
-
-  - name: loki  # Telemetry for logging
-    version: "5.42.0"  # Check for latest version
+  - name: loki
+    version: "5.42.0"
     repository: "https://grafana.github.io/helm-charts"
-    condition: telemetry.enabled
