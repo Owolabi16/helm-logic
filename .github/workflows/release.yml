@@ -1,0 +1,47 @@
+name: Release Workflow
+description: "A barebones release workflow action"
+
+branding:
+  icon: "terminal"
+  color: "blue"
+
+on:
+  push:
+    branches:
+      - master  
+
+jobs:
+  build_chart_workflow:
+    runs-on: ubuntu-latest
+
+    inputs:
+      version:  # TODO: This input can be automated in the future to reduce cognitive load on developers
+        description: "The version of the chart to release (in format platform---*)."
+        required: true
+
+    outputs:
+      version:
+        description: "The version of the chart that was released"
+
+    steps:
+      - name: Release Platform
+        run: echo "Releasing platform version ${{ inputs.version }}"
+
+      # TODO: Create a branch name from the version number
+      # TODO: Checkout the branch
+      - name: Platform get versions from service
+        run: ./release/platform-get-versions-from-service.sh ${{ inputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Helm Dependency Update
+        run: helm dependency update
+
+        #TODO: Add a step to run the build chart workflow. It receives an array of charts to build and the version to build them with.
+        #TODO: Ensure that all build chart workflows have the same name to make it easier to reference them in the release workflow.
+        #TODO: Ensure the commit author is our infra automation account. Set the git config to the automation account's name and email.
+        #TODO: Commit the code changes from Chart.lock and Chart.yaml to the repository.
+        #TODO: Create a pull request with the changes from the previous step.
+        #TODO: The input version should be changed using CHART_VERSION=$(echo $NEXT_VERSION | tr '-' '.')
+        #TODO: The pull request should be titled "Platform release candidate ${{ inputs.version }}" and should be assigned to the release manager.
+        #TODO: Run Build Infra Charts workflow to publish a new platform version to the chart registry. 
