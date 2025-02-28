@@ -1,4 +1,4 @@
-,m name: Release Workflow
+name: Release Workflow
 description: "A barebones release workflow action"
 
 #branding:
