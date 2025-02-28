@@ -32,7 +32,7 @@ jobs:
 
       - name: Build Helm Charts
         run: |
-          CHARTS_TO_BUILD='["nginx", "telemetry"]'
+          CHARTS_TO_BUILD='["prometheus", "jaeger", "loki"]'
           VERSION="0.5.0"
       
           for chart in $(echo "$CHARTS_TO_BUILD" | jq -r '.[]'); do
