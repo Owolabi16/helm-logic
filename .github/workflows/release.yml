@@ -71,6 +71,11 @@ jobs:
             exit 1
           fi
 
+      - name: Transform Input Version
+        run: |
+          CHART_VERSION=$(echo "${{ inputs.version }}" | tr '-' '.')
+          echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
+          
       - name: Create and Checkout Release Branch
         run: |
           RELEASE_BRANCH="platform/${{ inputs.version }}"
@@ -99,11 +104,6 @@ jobs:
             --base master \
             --head "$RELEASE_BRANCH" \
             --assignee release-manager
-
-      - name: Transform Input Version
-        run: |
-          CHART_VERSION=$(echo "${{ inputs.version }}" | tr '-' '.')
-          echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
 
       - name: Trigger Infra Chart Build
         uses: actions/github-script@v6
