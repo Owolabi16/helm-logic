@@ -2,7 +2,7 @@
 
 set -e  # Exit script if any command fails
 
-echo "Updating Helm dependencies per chart..."
+echo "Updating Helm dependencies per chart....."
 
 # Read dependencies from Chart.yaml
 CHARTS=$(yq eval '.dependencies[] | .name + " " + .version' Chart.yaml)
