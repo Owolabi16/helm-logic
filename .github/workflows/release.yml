@@ -1,4 +1,4 @@
-name: Release Workflow
+,m name: Release Workflow
 description: "A barebones release workflow action"
 
 #branding:
@@ -24,17 +24,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Release Platform
-        run: echo "Releasing platform version ${{ inputs.version }}"
+        run: echo "'12.8.9' ${{ inputs.version }}"
 
       # TODO: Create a branch name from the version number
       # TODO: Checkout the branch
-      - name: Platform get versions from service
-        run: ./release/platform-get-versions-from-service.sh ${{ inputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #- name: Platform get versions from service
+      #  run: ./release/platform-get-versions-from-service.sh ${{ inputs.version }}
+      #  env:
+      #      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Helm Dependency Update
-        run: helm dependency update
+        run: ./helm-dependency-update.sh
 
     outputs:
       version: ${{ inputs.version }} # ✅ Fix: Outputs must be outside `steps`
