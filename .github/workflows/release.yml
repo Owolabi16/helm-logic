@@ -1,46 +1,28 @@
 name: Release Workflow
 description: "A barebones release workflow action"
 
-#branding:
-#  icon: "terminal"
-#  color: "blue"
-
 on:
   push:
     branches:
       - master
-  workflow_dispatch:
-    inputs:
-      version:  # TODO: Automate this in the future to reduce cognitive load on developers
-        description: "The version of the chart to release (in format platform---*)."
-        required: true
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
 
 jobs:
   build_chart_workflow:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # ✅ Ensure correct indentation
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Release Platform
-        run: echo "'12.8.9' ${{ inputs.version }}"
+      - name: Debug Filesystem
+        run: ls -lah
 
-      # TODO: Create a branch name from the version number
-      # TODO: Checkout the branch
-      #- name: Platform get versions from service
-      #  run: ./release/platform-get-versions-from-service.sh ${{ inputs.version }}
-      #  env:
-      #      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Make Helm Dependency Update Script Executable
+        run: chmod +x ./helm-dependency-update.sh
 
-    - name: Debug Filesystem
-      run: ls -lah
-
-    - name: Make Helm Dependency Update Script Executable
-      run: chmod +x ./helm-dependency-update.sh
-
-    - name: Run Helm Dependency Update
-      run: ./helm-dependency-update.sh
+      - name: Run Helm Dependency Update
+        run: ./helm-dependency-update.sh
 
     outputs:
       version: ${{ inputs.version }} # ✅ Fix: Outputs must be outside `steps`
