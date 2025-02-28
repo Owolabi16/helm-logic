@@ -4,16 +4,6 @@ set -e  # Exit script if any command fails
 
 echo "🔄 Updating Helm dependencies per chart..."
 
-# Ensure Chart.yaml exists
-if [[ -f "Chart.yaml" ]]; then
-    CHART_FILE="Chart.yaml"
-elif [[ -f "chart.yaml" ]]; then
-    CHART_FILE="chart.yaml"
-else
-    echo "❌ Error: Chart.yaml not found! Ensure the script is running in the correct directory."
-    exit 1
-fi
-
 # Read dependencies from the chart file
 CHARTS=$(yq eval '.dependencies[] | .name + " " + .version + " " + .repository' "$CHART_FILE")
 
