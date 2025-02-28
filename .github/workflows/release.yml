@@ -23,7 +23,7 @@ jobs:
       - name: Release Platform
         run: |
           VERSION="${{ inputs.version }}"
-          echo "1-2-3/${VERSION}"
+          echo "1.2.3/${VERSION}"
 
       - name: Make Helm Dependency Update Script Executable
         run: chmod +x ./helm-dependency-update.sh
