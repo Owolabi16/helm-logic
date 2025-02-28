@@ -19,10 +19,10 @@ jobs:
         run: ls -lah
 
       - name: Make Helm Dependency Update Script Executable
-        run: chmod +x ./dependency-update.sh
+        run: chmod +x ./helm-dependency-update.sh
 
       - name: Run Helm Dependency Update
-        run: ./dependency-update.sh
+        run: ./helm-dependency-update.sh
 
     outputs:
       version: ${{ inputs.version }} # ✅ Fix: Outputs must be outside `steps`

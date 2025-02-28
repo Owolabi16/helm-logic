@@ -1,0 +1,25 @@
+apiVersion: v2
+name: platform
+description: Platform Deployment
+type: application
+version: 0.5.0
+dependencies:
+  - name: nginx
+    version: "15.15.1"  # Check for latest version
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: nginx.enabled
+
+  - name: prometheus  # Telemetry for metrics
+    version: "25.12.0"  # Check for latest version
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: telemetry.enabled
+
+  - name: jaeger  # Telemetry for tracing
+    version: "0.71.6"  # Check for latest version
+    repository: "https://jaegertracing.github.io/helm-charts"
+    condition: telemetry.enabled
+
+  - name: loki  # Telemetry for logging
+    version: "5.42.0"  # Check for latest version
+    repository: "https://grafana.github.io/helm-charts"
+    condition: telemetry.enabled
