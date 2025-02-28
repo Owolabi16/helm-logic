@@ -14,15 +14,6 @@ else
     exit 1
 fi
 
-# Add repositories manually before updating
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add jaeger https://jaegertracing.github.io/helm-charts
-helm repo add grafana https://grafana.github.io/helm-charts
-
-# Update repositories
-helm repo update
-
 # Read dependencies from the chart file
 CHARTS=$(yq eval '.dependencies[] | .name + " " + .version + " " + .repository' "$CHART_FILE")
 
@@ -33,9 +24,26 @@ while IFS= read -r chart_info; do
     CHART_VERSION=$(echo "$chart_info" | awk '{print $2}')
     CHART_REPO=$(echo "$chart_info" | awk '{print $3}')
 
+    if [[ -z "$CHART_NAME" || -z "$CHART_VERSION" || -z "$CHART_REPO" ]]; then
+        echo "⚠️ Skipping invalid dependency entry: $chart_info"
+        continue
+    fi
+
+    # Extract repo name from URL (e.g., "bitnami" from "https://charts.bitnami.com/bitnami")
+    REPO_NAME=$(basename "$CHART_REPO")
+
+    # Add the repo dynamically
+    if ! helm repo list | grep -q "$REPO_NAME"; then
+        echo "📦 Adding Helm repo: $REPO_NAME -> $CHART_REPO"
+        helm repo add "$REPO_NAME" "$CHART_REPO"
+    fi
+
+    # Update repo before fetching
+    helm repo update >/dev/null 2>&1
+
     echo "🔄 Updating dependency: $CHART_NAME (Version: $CHART_VERSION) from $CHART_REPO"
     
-    if ! helm fetch "$CHART_NAME" --version "$CHART_VERSION" >/dev/null 2>&1; then
+    if ! helm upgrade --install "$CHART_NAME" "$REPO_NAME/$CHART_NAME" --version "$CHART_VERSION"; then
         echo "🚨 Failed to update dependency: $CHART_NAME (Version: $CHART_VERSION)"
         FAILING_CHARTS+=("$CHART_NAME")
     else
