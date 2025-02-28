@@ -8,24 +8,21 @@ description: "A barebones release workflow action"
 on:
   push:
     branches:
-      - master 
-
+      - master
   workflow_dispatch:
     inputs:
-      version:  # TODO: This input can be automated in the future to reduce cognitive load on developers
+      version:  # TODO: Automate this in the future to reduce cognitive load on developers
         description: "The version of the chart to release (in format platform---*)."
-        required: true 
+        required: true
 
 jobs:
   build_chart_workflow:
     runs-on: ubuntu-latest
 
-    outputs:
-      version: 
-        description: "The version of the chart that was released"
-        value: ${{ inputs.version }}
-
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Release Platform
         run: echo "Releasing platform version ${{ inputs.version }}"
 
@@ -38,6 +35,10 @@ jobs:
 
       - name: Helm Dependency Update
         run: helm dependency update
+
+    outputs:
+      version: ${{ inputs.version }} # ✅ Fix: Outputs must be outside `steps`
+
 
         #TODO: Add a step to run the build chart workflow. It receives an array of charts to build and the version to build them with.
         #TODO: Ensure that all build chart workflows have the same name to make it easier to reference them in the release workflow.
