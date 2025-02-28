@@ -5,24 +5,42 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch:  # Allows manual trigger from GitHub UI
+      
+  workflow_dispatch:
+    inputs:
+      version:  # TODO: Automate this in the future to reduce cognitive load on developers
+        description: "The version of the chart to release (in format platform---*)."
+        required: true
 
 jobs:
   build_chart_workflow:
-    runs-on: ubuntu-latest  # ✅ Ensure correct indentation
+    runs-on: ubuntu-latest 
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Debug Filesystem
-        run: ls -lah
+      - run: echo "1-2-3 ${{ inputs.version }}"
+        name: Release Platform
+
 
       - name: Make Helm Dependency Update Script Executable
         run: chmod +x ./helm-dependency-update.sh
 
       - name: Run Helm Dependency Update
         run: ./helm-dependency-update.sh
+
+      - name: Build Helm Charts
+        run: |
+          CHARTS_TO_BUILD='["nginx", "telemetry"]'
+          VERSION="0.5.0"
+      
+          for chart in $(echo "$CHARTS_TO_BUILD" | jq -r '.[]'); do
+            echo "Building $chart with version $VERSION"
+            helm dependency update charts/$chart
+            helm package charts/$chart --version $VERSION
+          done
+        shell: bash
 
     outputs:
       version: ${{ inputs.version }} # ✅ Fix: Outputs must be outside `steps`
