@@ -62,9 +62,22 @@ jobs:
           git config --global user.name "Infra Automation Bot"
           git config --global user.email "infra-bot@example.com"
 
+      - name: Validate Input Version
+        run: |
+          if [[ -z "${{ inputs.version }}" ]]; then
+            echo "Error: Version input is missing!"
+            exit 1
+          fi
+
       - name: Create and Checkout Release Branch
         run: |
           RELEASE_BRANCH="platform/${{ inputs.version }}"
+          # Validate branch name format
+          if ! git check-ref-format --branch "$RELEASE_BRANCH"; then
+            echo "Error: Invalid branch name: $RELEASE_BRANCH"
+            exit 1
+          fi
+          
           git checkout -b "$RELEASE_BRANCH"
           echo "RELEASE_BRANCH=$RELEASE_BRANCH" >> $GITHUB_ENV
 
@@ -84,7 +97,7 @@ jobs:
             --base master \
             --head "$RELEASE_BRANCH" \
             --assignee release-manager
-          
+
       - name: Transform Input Version
         run: |
           CHART_VERSION=$(echo "${{ inputs.version }}" | tr '-' '.')
@@ -104,4 +117,5 @@ jobs:
                 version: process.env.CHART_VERSION
               }
             })
+
 
