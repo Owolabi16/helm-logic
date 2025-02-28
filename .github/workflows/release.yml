@@ -62,11 +62,17 @@ jobs:
           git config --global user.name "Infra Automation Bot"
           git config --global user.email "infra-bot@example.com"
 
+      - name: Create and Checkout Release Branch
+        run: |
+          RELEASE_BRANCH="platform/${{ inputs.version }}"
+          git checkout -b "$RELEASE_BRANCH"
+          echo "RELEASE_BRANCH=$RELEASE_BRANCH" >> $GITHUB_ENV
+
       - name: Commit Helm Chart Updates
         run: |
           git add Chart.yaml
-          git commit -m "chore: update Helm dependencies"
-          git push origin master
+          git commit -m "chore: update Helm dependencies for ${{ inputs.version }}"
+          git push origin "$RELEASE_BRANCH"
 
       - name: Create Pull Request
         env:
@@ -76,9 +82,9 @@ jobs:
             --title "Platform release candidate ${{ inputs.version }}" \
             --body "This PR updates Helm dependencies and prepares for release." \
             --base master \
-            --head release-branch \
+            --head "$RELEASE_BRANCH" \
             --assignee release-manager
-
+          
       - name: Transform Input Version
         run: |
           CHART_VERSION=$(echo "${{ inputs.version }}" | tr '-' '.')
@@ -97,4 +103,5 @@ jobs:
               inputs: {
                 version: process.env.CHART_VERSION
               }
-            });
+            })
+
