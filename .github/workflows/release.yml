@@ -1,9 +1,9 @@
 name: Release Workflow
 description: "A barebones release workflow action"
 
-branding:
-  icon: "terminal"
-  color: "blue"
+#branding:
+#  icon: "terminal"
+#  color: "blue"
 
 on:
   push:
