@@ -5,10 +5,10 @@ on:
   push:
     branches:
       - master
-      
+  
   workflow_dispatch:
     inputs:
-      version:  # TODO: Automate this in the future to reduce cognitive load on developers
+      version:
         description: "The version of the chart to release (in format platform---*)."
         required: true
 
@@ -20,9 +20,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - run: echo "1-2-3 ${{ inputs.version }}"
-        name: Release Platform
-
+      - name: Release Platform
+        run: echo "1-2-3 ${{ inputs.version }}"
 
       - name: Make Helm Dependency Update Script Executable
         run: chmod +x ./helm-dependency-update.sh
@@ -33,24 +32,69 @@ jobs:
       - name: Build Helm Charts
         run: |
           CHARTS_TO_BUILD='["prometheus", "jaeger", "loki"]'
-          VERSION="0.5.0"
+          NEXT_VERSION="0-5-0"
+          CHART_VERSION=$(echo $NEXT_VERSION | tr '-' '.')
+      
+          echo "Building charts with version: $CHART_VERSION"
       
           for chart in $(echo "$CHARTS_TO_BUILD" | jq -r '.[]'); do
-            echo "Building $chart with version $VERSION"
+            echo "Processing chart: $chart"
             helm dependency update charts/$chart
-            helm package charts/$chart --version $VERSION
+            helm package charts/$chart --version $CHART_VERSION
           done
         shell: bash
 
     outputs:
-      version: ${{ inputs.version }} # ✅ Fix: Outputs must be outside `steps`
+      version: ${{ inputs.version }}
 
+  commit_and_release:
+    runs-on: ubuntu-latest
+    needs: build_chart_workflow  # Ensure charts are built before committing
 
-        #TODO: Add a step to run the build chart workflow. It receives an array of charts to build and the version to build them with.
-        #TODO: Ensure that all build chart workflows have the same name to make it easier to reference them in the release workflow.
-        #TODO: Ensure the commit author is our infra automation account. Set the git config to the automation account's name and email.
-        #TODO: Commit the code changes from Chart.lock and Chart.yaml to the repository.
-        #TODO: Create a pull request with the changes from the previous step.
-        #TODO: The input version should be changed using CHART_VERSION=$(echo $NEXT_VERSION | tr '-' '.')
-        #TODO: The pull request should be titled "Platform release candidate ${{ inputs.version }}" and should be assigned to the release manager.
-        #TODO: Run Build Infra Charts workflow to publish a new platform version to the chart registry. 
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git Author
+        run: |
+          git config --global user.name "Infra Automation Bot"
+          git config --global user.email "infra-bot@example.com"
+
+      - name: Commit Helm Chart Updates
+        run: |
+          git add Chart.lock Chart.yaml
+          git commit -m "chore: update Helm dependencies"
+          git push origin master
+
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "Platform release candidate ${{ inputs.version }}" \
+            --body "This PR updates Helm dependencies and prepares for release." \
+            --base master \
+            --head release-branch \
+            --assignee release-manager
+
+      - name: Transform Input Version
+        run: |
+          CHART_VERSION=$(echo "${{ inputs.version }}" | tr '-' '.')
+          echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
+
+      - name: Trigger Infra Chart Build
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "build-infra-charts.yml",
+              ref: "master",
+              inputs: {
+                version: process.env.CHART_VERSION
+              }
+            });
