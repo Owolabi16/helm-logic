@@ -129,9 +129,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
-      - name: Create Pull Request
+      - name: Check if PR already exists
+        id: check_pr
+        run: |
+          EXISTING_PR=$(gh pr list --base master --head "$RELEASE_BRANCH" --json number --jq '.[0].number' || echo "")
+          if [[ -n "$EXISTING_PR" ]]; then
+            echo "PR_EXISTS=true" >> $GITHUB_ENV
+            echo "EXISTING_PR=$EXISTING_PR" >> $GITHUB_ENV
+          else
+            echo "PR_EXISTS=false" >> $GITHUB_ENV
+          fi
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+      - name: Create Pull Request
+        if: env.PR_EXISTS == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_URL=$(gh pr create \
             --title "Platform release candidate $CHART_VERSION" \
@@ -140,10 +154,16 @@ jobs:
             --head "$RELEASE_BRANCH")
       
           echo "PR created: $PR_URL"
-      
-          # Assign PR to the release manager
-          gh pr edit "$PR_URL" --add-assignee "Owolabi16"
-
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+  
+      - name: Assign PR
+        if: env.PR_EXISTS == 'false'
+        run: |
+          gh pr edit $PR_URL --add-assignee "release-manager"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    
       - name: Trigger Infra Chart Build
         uses: actions/github-script@v6
         with:
