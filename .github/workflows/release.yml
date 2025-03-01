@@ -163,20 +163,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
     
-    
       - name: Trigger Infra Chart Build
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.PAT_TOKEN }}
-          script: |
-            github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: "build-infra-charts.yml",
-              ref: "master",
-              inputs: {
-                version: process.env.CHART_VERSION
-              }
-            })
+           github-token: ${{ secrets.PAT_TOKEN }}
+           script: |
+             github.rest.actions.createWorkflowDispatch({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               workflow_id: "build-infra-charts.yml",
+               ref: "master",
+               inputs: {
+                 version: process.env.GITHUB_ENV || ""
+               }
+             })
+
 
 
