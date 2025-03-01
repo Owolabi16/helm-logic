@@ -1,21 +1,20 @@
-name: Build Infra Charts
+name: Target Workflow
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
-      version:
+      key1:
+        description: 'First input parameter'
         required: true
-        type: string
-    secrets:
-      token:
+      key2:
+        description: 'Second input parameter'
         required: true
 
 jobs:
-  build:
+  do-something:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Echo Version
-        run: echo "Building Infra Chart Version: ${{ inputs.version }}"
+      - name: Use inputs
+        run: |
+          echo "Key1: ${{ github.event.inputs.key1 }}"
+          echo "Key2: ${{ github.event.inputs.key2 }}"
