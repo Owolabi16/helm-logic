@@ -162,23 +162,24 @@ jobs:
           gh pr edit $PR_URL --add-assignee "Owolabi16"
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-    
+
       - name: Trigger Infra Chart Build
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
-            github.rest.actions.createWorkflowDispatch({
+            await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: "build-infra-charts.yml",  # Or use ID if needed
+              workflow_id: "build-infra-charts.yml",  # Ensure the file exists
               ref: "master",
               inputs: {
-                version: process.env.CHART_VERSION
+                version: process.env.CHART_VERSION || "latest"
               }
-            })
+            });
         env:
           CHART_VERSION: ${{ env.CHART_VERSION }}
+
 
 
 
