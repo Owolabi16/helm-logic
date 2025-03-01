@@ -2,7 +2,7 @@ apiVersion: v2
 name: platform
 description: Platform Deployment
 type: application
-version: 0.5.0
+version: 1.0.34
 dependencies:
   - name: prometheus
     version: "25.12.0"
