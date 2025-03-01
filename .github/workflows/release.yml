@@ -57,7 +57,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Configure Git Author
         run: |
@@ -106,7 +106,12 @@ jobs:
             exit 0
           fi
           git commit -m "chore: update Helm dependencies"
+
+      - name: Push Changes
+        run: |
           git push origin "$(git branch --show-current)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Create Pull Request
         env:
