@@ -89,10 +89,13 @@ jobs:
             exit 1
           fi
       
+          # Fetch all branches from remote
+          git fetch origin
+      
           # Check if the branch exists on the remote
           if git ls-remote --exit-code --heads origin "$RELEASE_BRANCH"; then
             echo "Branch $RELEASE_BRANCH already exists. Checking out..."
-            git checkout "$RELEASE_BRANCH"
+            git checkout "$RELEASE_BRANCH" || git checkout -b "$RELEASE_BRANCH" --track origin/"$RELEASE_BRANCH"
           else
             echo "Branch $RELEASE_BRANCH does not exist. Creating..."
             git checkout -b "$RELEASE_BRANCH"
@@ -100,6 +103,7 @@ jobs:
           fi
       
           echo "RELEASE_BRANCH=$RELEASE_BRANCH" >> $GITHUB_ENV
+
           
       - name: Update Chart.yaml with New Version
         run: |
