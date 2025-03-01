@@ -1,0 +1,21 @@
+name: Build Infra Charts
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Echo Version
+        run: echo "Building Infra Chart Version: ${{ inputs.version }}"
