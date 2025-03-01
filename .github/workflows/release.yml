@@ -140,12 +140,12 @@ jobs:
             echo "PR_EXISTS=false" >> $GITHUB_ENV
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
   
       - name: Create Pull Request
         if: env.PR_EXISTS == 'false'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           PR_URL=$(gh pr create \
             --title "Platform release candidate $CHART_VERSION" \
@@ -159,15 +159,15 @@ jobs:
       - name: Assign PR
         if: env.PR_EXISTS == 'false'
         run: |
-          gh pr edit $PR_URL --add-assignee "release-manager"
+          gh pr edit $PR_URL --add-assignee "Owolabi16"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
     
     
       - name: Trigger Infra Chart Build
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
