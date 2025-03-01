@@ -115,10 +115,10 @@ jobs:
 
       - name: Create Pull Request
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           gh pr create \
-            --title "Platform release candidate ${{ inputs.version }}" \
+            --title "Platform release candidate $CHART_VERSION" \
             --body "This PR updates Helm dependencies and prepares for release." \
             --base master \
             --head "$RELEASE_BRANCH" \
