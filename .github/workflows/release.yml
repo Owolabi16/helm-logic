@@ -91,11 +91,20 @@ jobs:
           git checkout -b "$RELEASE_BRANCH"
           echo "RELEASE_BRANCH=$RELEASE_BRANCH" >> $GITHUB_ENV
 
+      - name: Debug Chart.yaml Changes
+        run: |
+          cat Chart.yaml
+          git status
+
       - name: Commit Helm Chart Updates
         run: |
           git add Chart.yaml
-          git commit -m "chore: update Helm dependencies for ${{ inputs.version }}"
-          git push origin "$RELEASE_BRANCH"
+          if git diff --staged --quiet; then
+            echo "No changes detected, skipping commit."
+            exit 0
+          fi
+          git commit -m "chore: update Helm dependencies"
+          git push origin "$(git branch --show-current)"
 
       - name: Create Pull Request
         env:
