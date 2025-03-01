@@ -81,7 +81,7 @@ jobs:
           
       - name: Create and Checkout Release Branch
         run: |
-          RELEASE_BRANCH="platform/${{ inputs.version }}"
+          RELEASE_BRANCH="platform/$CHART_VERSION"
           # Validate branch name format
           if ! git check-ref-format --branch "$RELEASE_BRANCH"; then
             echo "Error: Invalid branch name: $RELEASE_BRANCH"
