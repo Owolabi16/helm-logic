@@ -91,13 +91,12 @@ jobs:
           git checkout -b "$RELEASE_BRANCH"
           echo "RELEASE_BRANCH=$RELEASE_BRANCH" >> $GITHUB_ENV
 
-      - name: Debug Chart.yaml Changes
+      - name: Update Chart.yaml with New Version
         run: |
-          echo "Before updating Chart.yaml:"
+          sed -i "s/^version: .*/version: $CHART_VERSION/" Chart.yaml
+          echo "Updated Chart.yaml:"
           cat Chart.yaml
-          echo "---------------------------"
-          echo "Git status before commit:"
-          git status
+
 
       - name: Commit Helm Chart Updates
         run: |
