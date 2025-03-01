@@ -93,7 +93,10 @@ jobs:
 
       - name: Debug Chart.yaml Changes
         run: |
+          echo "Before updating Chart.yaml:"
           cat Chart.yaml
+          echo "---------------------------"
+          echo "Git status before commit:"
           git status
 
       - name: Commit Helm Chart Updates
