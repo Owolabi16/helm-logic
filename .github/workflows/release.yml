@@ -109,7 +109,9 @@ jobs:
 
       - name: Push Changes
         run: |
-          git push origin "$(git branch --show-current)"
+          git fetch origin
+          git rebase origin/$(git branch --show-current) || git rebase --abort
+          git push origin "$(git branch --show-current)" --force
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
