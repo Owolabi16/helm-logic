@@ -133,12 +133,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          gh pr create \
+          PR_URL=$(gh pr create \
             --title "Platform release candidate $CHART_VERSION" \
             --body "This PR updates Helm dependencies and prepares for release." \
             --base master \
-            --head "$RELEASE_BRANCH" \
-            --assignee release-manager
+            --head "$RELEASE_BRANCH")
+      
+          echo "PR created: $PR_URL"
+      
+          # Assign PR to the release manager
+          gh pr edit "$PR_URL" --add-assignee "Owolabi16"
 
       - name: Trigger Infra Chart Build
         uses: actions/github-script@v6
