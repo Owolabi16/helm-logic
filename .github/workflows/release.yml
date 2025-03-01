@@ -177,8 +177,6 @@ jobs:
                 version: process.env.CHART_VERSION || "latest"
               }
             });
-        env:
-          CHART_VERSION: ${{ env.CHART_VERSION }}
 
 
 
