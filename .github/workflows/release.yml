@@ -163,20 +163,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
+      # - name: Trigger Infra Chart Build
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.PAT_TOKEN }}
+      #     script: |
+      #       await github.rest.actions.createWorkflowDispatch({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         workflow_id: "build-infra-charts.yml",  # Ensure the file exists
+      #         ref: "master",
+      #         inputs: {
+      #           version: process.env.CHART_VERSION || "latest"
+      #         }
+      #       });
+
       - name: Trigger Infra Chart Build
-        uses: actions/github-script@v6
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
         with:
-          github-token: ${{ secrets.PAT_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: "build-infra-charts.yml",  # Ensure the file exists
-              ref: "master",
-              inputs: {
-                version: process.env.CHART_VERSION || "latest"
-              }
-            });
+          owner: keithconvictional
+          repo: myrepo
+          github_token: ${{ secrets.PAT_TOKEN }}
+          workflow_file_name: build-infra-charts.yml
+          ref: master
+          wait_interval: 10
+          propagate_failure: false
+          trigger_workflow: true
+          wait_workflow: true
 
 
 
