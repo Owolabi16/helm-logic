@@ -1,0 +1,49 @@
+name: Release Workflow
+description: "A barebones release workflow action with owner validation"
+on:
+  push:
+    branches:
+      - test
+  
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version of the chart to release (in format platform---*)."
+        required: true
+
+jobs:
+  validate-trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Workflow Trigger Permissions
+        env:
+          ALLOWED_OWNERS: '["Owolabi16", "admin-user1", "admin-user2"]'
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: |
+          # Convert the ALLOWED_OWNERS to a bash array
+          readarray -t OWNERS < <(echo "$ALLOWED_OWNERS" | jq -c '.[]' | tr -d '"')
+          
+          # Flag to track if the actor is allowed
+          ALLOWED=false
+          
+          # Check if the triggering user is in the allowed list
+          for owner in "${OWNERS[@]}"; do
+            if [[ "$GITHUB_ACTOR" == "$owner" ]]; then
+              ALLOWED=true
+              break
+            fi
+          done
+          
+          # If not allowed and triggered manually, fail the workflow
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "$ALLOWED" == "false" ]]; then
+            echo "Error: Workflow can only be manually triggered by approved owners."
+            echo "Attempted trigger by: $GITHUB_ACTOR"
+            exit 1
+          fi
+  
+  build_chart_workflow:
+    needs: validate-trigger
+    runs-on: ubuntu-latest 
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
