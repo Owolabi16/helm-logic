@@ -130,15 +130,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Read PR details and ensure it's a valid JSON array
-          PR_LIST=$(jq -s '.' pr_details.json)
+          # Filter out empty arrays and keep only valid PR entries
+          PR_LIST=$(jq '[.[] | select(length > 0)]' pr_details.json)
           
           # Initialize merge counters
           TOTAL_PRS=$(echo "$PR_LIST" | jq length)
           MERGED_PRS=0
           
-          # Debug: Print the entire PR_LIST to understand its structure
-          echo "PR List structure:"
+          # Debug: Print the filtered PR_LIST
+          echo "Filtered PR List structure:"
           echo "$PR_LIST" | jq .
           
           # Merge each PR
