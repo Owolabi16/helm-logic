@@ -3,7 +3,7 @@ name: Branch-wide PR Merger
 on:
   push:
     branches:
-      - branch-test
+      - master
 
   workflow_dispatch:
     inputs:
