@@ -51,7 +51,7 @@ jobs:
       - name: Find Open PRs
         id: find-prs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_PAT_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           BRANCH_NAME: ${{ inputs.branch_name || 'master' }}
         run: |   
           # Ensure clean output file and create an empty JSON array
@@ -134,7 +134,7 @@ jobs:
           jq '[.[] | {number, title, repository}]' pr_details.json         
       - name: Merge PRs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_PAT_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           # Read the PR list
           PR_LIST=$(jq '.' pr_details.json)
