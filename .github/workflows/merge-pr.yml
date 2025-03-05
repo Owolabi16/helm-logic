@@ -134,7 +134,7 @@ jobs:
           jq '[.[] | {number, title, repository}]' pr_details.json         
       - name: Merge PRs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_PAT_TOKEN }}
         run: |
           # Read the PR list
           PR_LIST=$(jq '.' pr_details.json)
