@@ -1,0 +1,25 @@
+name: Branch-wide PR Merger
+
+on:
+  push:
+    branches:
+      - master
+
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch name to scan and merge PRs'
+        required: true
+
+jobs:
+  merge-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Merge PRs from a specific branch
+        uses: Owolabi16/pr_merger@main
+        with:
+          branch: ${{ inputs.branch }} 
+          token: ${{ secrets.PAT_TOKEN }}  
