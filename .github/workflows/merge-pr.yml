@@ -22,6 +22,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Echo image Target
+        run: |
+          # print out the image Target
+          echo "images with -next tag removed"   
+
       - name: Install GitHub CLI
         run: |
           type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
@@ -136,8 +141,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          echo "Delaying for 1 minutes before merging PRs..."
-          sleep 180  # Sleep for 60 seconds (3 minutes)
+          echo "Delaying for 30 seconds before merging PRs..."
+          sleep 30   
 
           # Read the PR list
           PR_LIST=$(jq '.' pr_details.json)
@@ -171,16 +176,13 @@ jobs:
             # Attempt to merge the PR
             if gh pr merge "$PR_NUMBER" --repo "$REPO" --merge; then
               MERGED_PRS=$((MERGED_PRS + 1))
-              echo "Merged PR #$PR_NUMBER in $REPO"
+              echo "Merged PR #$PR_NUMBER in $REPO" was successfully..
             else
               echo "Failed to merge PR #$PR_NUMBER in $REPO"
               echo "Error: $(gh pr merge "$PR_NUMBER" --repo "$REPO" --merge || echo "Merge failed")"
             fi
           done
           
-          # Print merge summary
-          echo "Total PRs: $TOTAL_PRS"
-          echo "Merged PRs: $MERGED_PRS"
 
 
       - name: Summary Report
