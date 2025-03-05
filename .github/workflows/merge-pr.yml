@@ -7,10 +7,9 @@ on:
 
   workflow_dispatch:
     inputs:
-      branch_name:
+      branch:
         description: 'Branch name to scan and merge PRs'
         required: true
-        type: string
         default: 'branch-test'
 
 jobs:
