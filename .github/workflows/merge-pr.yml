@@ -55,10 +55,8 @@ jobs:
         id: find-prs
         env:
           GH_TOKEN: ${{ github.token }}
-          BRANCH_NAME: ${{ inputs.branch_name || 'platform/1.0.34' }}
-        run: |
-         # Ensure BRANCH_NAME has a value
-         BRANCH_NAME="${BRANCH_NAME:-branch-test}"     
+          BRANCH_NAME: ${{ inputs.branch_name || 'master' }}
+        run: |   
         
           # Ensure clean output file
           > pr_details.json
