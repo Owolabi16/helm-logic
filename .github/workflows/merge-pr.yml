@@ -1,0 +1,191 @@
+name: Branch-wide PR Merger
+
+on:
+  push:
+    branches:
+      - master
+
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch name to scan and merge PRs'
+        required: true
+        default: 'branch-test'
+
+jobs:
+  discover-prs:
+    runs-on: ubuntu-latest
+    outputs:
+      pr_list: ${{ steps.find-prs.outputs.pr_list }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Echo image Target
+        run: |
+          # print out the image Target
+          echo "images with -next tag removed"   
+
+      - name: Install GitHub CLI
+        run: |
+          type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+          && sudo apt update \
+          && sudo apt install gh -y
+      - name: Discover Repositories
+        id: repo-list
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          # Use jq to create a proper JSON array
+          REPOSITORIES=$(gh repo list --limit 1000 --json nameWithOwner | jq -r '.[] | .nameWithOwner')
+          
+          # Convert to JSON array
+          REPOS_JSON=$(echo "$REPOSITORIES" | jq -R . | jq -s .)
+          
+          # Output the repositories
+          echo "repos<<EOF" >> $GITHUB_OUTPUT
+          echo "$REPOS_JSON" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Print total repositories.
+          echo "Total repositories discovered: $(echo "$REPOSITORIES" | wc -l)"
+      - name: Find Open PRs
+        id: find-prs
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          BRANCH_NAME: ${{ inputs.branch_name || 'master' }}
+        run: |   
+          # Ensure clean output file and create an empty JSON array
+          echo '[]' > pr_details.json
+          
+          # Parse repositories safely
+          REPOSITORIES=$(echo '${{ steps.repo-list.outputs.repos }}' | jq -r '.[]')
+          
+          # Initialize PR tracking
+          PR_COUNT=0
+          
+          # Iterate through repositories
+          while IFS= read -r repo; do
+            echo "Checking PRs in $repo for branch $BRANCH_NAME"
+            
+            # Find open PRs for the specific branch
+            REPO_PRS=$(gh pr list --repo "$repo" --base "$BRANCH_NAME" --state open --json number,title,url)
+            
+            # Check if any PRs exist
+            PR_COUNT_IN_REPO=$(echo "$REPO_PRS" | jq 'length')
+            
+            if [ "$PR_COUNT_IN_REPO" -gt 0 ]; then
+              echo "Found PRs in $repo:"
+              echo "$REPO_PRS" | jq -r '.[] | "- #\(.number): \(.title)"'
+              
+              # Append to pr_details.json with repository context
+              REPO_PRS=$(echo "$REPO_PRS" | jq --arg repo "$repo" '[.[] | . + {repository: $repo}]')
+              jq -s '.[0] + .[1]' pr_details.json <(echo "$REPO_PRS") > temp.json && mv temp.json pr_details.json
+              
+              PR_COUNT=$((PR_COUNT + PR_COUNT_IN_REPO))
+            fi
+          done <<< "$REPOSITORIES"
+          
+          # Combine all PRs into a single JSON array
+          PR_LIST=$(jq -s '.' pr_details.json)
+          
+          # Output PR list
+          echo "pr_list<<EOF" >> $GITHUB_OUTPUT
+          echo "$PR_LIST" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Print summary
+          echo "Total PRs found: $PR_COUNT"
+      - name: Upload PR Details
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-details
+          path: pr_details.json
+          retention-days: 1
+
+  merge-prs:
+    needs: discover-prs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        run: |
+          type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+          && sudo apt update \
+          && sudo apt install gh -y
+      - name: Download PR Details
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-details
+
+      - name: Detailed PR Details Debug
+        run: |
+          echo "Raw contents of pr_details.json:"
+          cat pr_details.json
+          
+          echo "\nParsed JSON array:"
+          jq '.' pr_details.json
+          
+          echo "\nDetailed PR parsing:"
+          jq '[.[] | {number, title, repository}]' pr_details.json         
+      - name: Merge PRs
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          echo "Delaying for 30 seconds before merging PRs..."
+          sleep 30   
+
+          # Read the PR list
+          PR_LIST=$(jq '.' pr_details.json)
+          
+          # Debug: Print the entire PR list
+          echo "PR List contents:"
+          echo "$PR_LIST" | jq .
+          
+          # Filter out any empty or invalid entries
+          PR_LIST=$(echo "$PR_LIST" | jq '[.[] | select(. != null and .number != null)]')
+          
+          # Initialize merge counters
+          TOTAL_PRS=$(echo "$PR_LIST" | jq length)
+          MERGED_PRS=0
+          
+          # Merge each PR
+          echo "$PR_LIST" | jq -c '.[]' | while read -r PR; do
+            # Safely extract repository and PR details
+            REPO=$(echo "$PR" | jq -r '.repository // empty')
+            PR_NUMBER=$(echo "$PR" | jq -r '.number // empty')
+            PR_TITLE=$(echo "$PR" | jq -r '.title // empty')
+            
+            # Validate extracted values
+            if [ -z "$REPO" ] || [ -z "$PR_NUMBER" ]; then
+              echo "Skipping invalid PR entry: $PR"
+              continue
+            fi
+            
+            echo "Attempting to merge PR #$PR_NUMBER in $REPO: $PR_TITLE"
+            
+            # Attempt to merge the PR
+            if gh pr merge "$PR_NUMBER" --repo "$REPO" --merge; then
+              MERGED_PRS=$((MERGED_PRS + 1))
+              echo "Merged PR #$PR_NUMBER in $REPO" was successfully..
+            else
+              echo "Failed to merge PR #$PR_NUMBER in $REPO"
+              echo "Error: $(gh pr merge "$PR_NUMBER" --repo "$REPO" --merge || echo "Merge failed")"
+            fi
+          done
+          
+
+
+      - name: Summary Report
+        run: |
+          echo "## PR Merge Summary 📋" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Completed merge process for all discovered PRs" >> $GITHUB_STEP_SUMMARY
+          echo "🌿 Branch: ${{ inputs.branch_name }}" >> $GITHUB_STEP_SUMMARY
