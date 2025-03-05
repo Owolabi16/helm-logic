@@ -78,7 +78,7 @@ jobs:
             echo "Checking PRs in $repo for branch $BRANCH_NAME"
             
             # Find open PRs for the specific branch
-            REPO_PRS=$(gh pr list --repo "$repo" --base "$BRANCH_NAME" --state open --json number,title,url)
+            REPO_PRS=$(gh pr list --repo "$repo" --head "$BRANCH_NAME" --state open --json number,title,url)
             
             # Check if any PRs exist
             PR_COUNT_IN_REPO=$(echo "$REPO_PRS" | jq 'length')
