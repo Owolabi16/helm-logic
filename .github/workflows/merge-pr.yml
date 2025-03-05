@@ -132,17 +132,17 @@ jobs:
           cat pr_details.json
           
           echo "\nParsed JSON array:"
-          jq -s '.' pr_details.json
+          jq '.' pr_details.json
           
           echo "\nDetailed PR parsing:"
-          jq -s '[.[] | {number, title, repository}]' pr_details.json         
+          jq '[.[] | {number, title, repository}]' pr_details.json         
 
       - name: Merge PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Convert the file contents to a proper JSON array
-          PR_LIST=$(jq -s '.' pr_details.json)
+          # Read the PR list
+          PR_LIST=$(jq '.' pr_details.json)
           
           # Debug: Print the entire PR list
           echo "PR List contents:"
@@ -154,10 +154,6 @@ jobs:
           # Initialize merge counters
           TOTAL_PRS=$(echo "$PR_LIST" | jq length)
           MERGED_PRS=0
-          
-          # Debug: Print filtered PR list
-          echo "Filtered PR List:"
-          echo "$PR_LIST" | jq .
           
           # Merge each PR
           echo "$PR_LIST" | jq -c '.[]' | while read -r PR; do
