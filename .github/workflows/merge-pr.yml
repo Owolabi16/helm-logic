@@ -49,26 +49,25 @@ jobs:
           # Print total repositories
           echo "Total repositories discovered: $(echo "$REPOSITORIES" | wc -l)"
 
+
       - name: Find Open PRs
         id: find-prs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_PAT_TOKEN }}
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: |
           # Initialize an empty array to store PRs
-          PR_LIST=()
+          touch pr_details.json
           
           # Get repositories
           REPOSITORIES=(${{ steps.repo-list.outputs.repos }})
-          
-          # Create a file to store PR details
-          touch pr_details.json
           
           for repo in "${REPOSITORIES[@]}"; do
             echo "Checking PRs in $repo for branch $BRANCH_NAME"
             
             # Find open PRs for the specific branch
-            REPO_PRS=$(gh pr list --repo "$repo" --base "$BRANCH_NAME" --state open --json number,title,url,repository)
+            # Remove the 'repository' field and only use supported fields
+            REPO_PRS=$(gh pr list --repo "$repo" --base "$BRANCH_NAME" --state open --json number,title,url)
             
             # Check if any PRs exist
             if [ "$(echo "$REPO_PRS" | jq length)" -gt 0 ]; then
@@ -76,7 +75,8 @@ jobs:
               echo "$REPO_PRS" | jq -r '.[] | "- #\(.number): \(.title)"'
               
               # Append to PR_LIST and pr_details.json
-              echo "$REPO_PRS" | jq -c '.[]' >> pr_details.json
+              # Manually add the repository name to each PR object
+              echo "$REPO_PRS" | jq --arg repo "$repo" '.[] | . + {repository: $repo}' >> pr_details.json
             fi
           done
           
@@ -85,7 +85,7 @@ jobs:
           echo "pr_list=$PR_LIST" >> $GITHUB_OUTPUT
           
           # Print summary
-          echo "Total PRs found: $(echo "$PR_LIST" | jq length)"
+          echo "Total PRs found: $(echo "$PR_LIST" | jq length)"          
 
       - name: Upload PR Details
         uses: actions/upload-artifact@v4
