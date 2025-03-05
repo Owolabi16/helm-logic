@@ -10,7 +10,6 @@ on:
       branch:
         description: 'Branch name to scan and merge PRs'
         required: true
-        default: 'branch-test'
 
 jobs:
   discover-prs:
@@ -34,7 +33,7 @@ jobs:
           && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
           && sudo apt update \
           && sudo apt install gh -y
-          
+
       - name: Discover Repositories
         id: repo-list
         env:
@@ -57,7 +56,7 @@ jobs:
         id: find-prs
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-          BRANCH_NAME: ${{ inputs.branch_name || 'master' }}
+          BRANCH_NAME: ${{ inputs.branch_name }}
         run: |   
           # Ensure clean output file and create an empty JSON array
           echo '[]' > pr_details.json
