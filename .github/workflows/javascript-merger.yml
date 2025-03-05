@@ -21,4 +21,6 @@ jobs:
       - name: Merge PRs from a specific branch
         uses: Owolabi16/pr_merger@main
         with:
-          branch: ${{ inputs.branch }}  
+          branch: ${{ inputs.branch }}
+        env:   
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}  
