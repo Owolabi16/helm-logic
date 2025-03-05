@@ -56,35 +56,40 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: |
-          # Convert the repositories to a bash array
-          readarray -t REPOSITORIES < <(echo '${{ steps.repo-list.outputs.repos }}' | jq -r '.[]')
+          # Ensure BRANCH_NAME is set, default to 'main' if not provided
+          BRANCH_NAME="${BRANCH_NAME:-main}"
           
-          # Initialize an empty array to store PRs
-          touch pr_details.json
+          # Initialize an empty JSON file for PR details
+          echo '[]' > pr_details.json
           
-          for repo in "${REPOSITORIES[@]}"; do
+          # Parse repositories safely
+          REPOSITORIES=$(echo '${{ steps.repo-list.outputs.repos }}' | jq -r '.[]')
+          
+          # Iterate through repositories
+          while IFS= read -r repo; do
             echo "Checking PRs in $repo for branch $BRANCH_NAME"
             
             # Find open PRs for the specific branch
             REPO_PRS=$(gh pr list --repo "$repo" --base "$BRANCH_NAME" --state open --json number,title,url)
             
             # Check if any PRs exist
-            if [ "$(echo "$REPO_PRS" | jq length)" -gt 0 ]; then
+            if [ "$(echo "$REPO_PRS" | jq 'length')" -gt 0 ]; then
               echo "Found PRs in $repo:"
               echo "$REPO_PRS" | jq -r '.[] | "- #\(.number): \(.title)"'
               
-              # Append to PR_LIST and pr_details.json
-              # Manually add the repository name to each PR object
-              echo "$REPO_PRS" | jq --arg repo "$repo" '.[] | . + {repository: $repo}' >> pr_details.json
+              # Append to pr_details.json with repository context
+              echo "$REPO_PRS" | jq --arg repo "$repo" '.[] | . + {repository: $repo}' | jq -c '.' >> pr_details.json
             fi
-          done
+          done <<< "$REPOSITORIES"
           
-          # Convert pr_details.json to a JSON array for output
+          # Combine all PRs into a single JSON array
           PR_LIST=$(jq -s '.' pr_details.json)
+          
+          # Output PR list
           echo "pr_list=$PR_LIST" >> $GITHUB_OUTPUT
           
           # Print summary
-          echo "Total PRs found: $(echo "$PR_LIST" | jq length)"  
+          echo "Total PRs found: $(echo "$PR_LIST" | jq length)" 
 
       - name: Upload PR Details
         uses: actions/upload-artifact@v4
