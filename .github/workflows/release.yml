@@ -1,5 +1,5 @@
 name: Release Workflow
-description: "A barebones release workflow action...."
+description: "A barebones release workflow action..."
 
 on:
   push:
