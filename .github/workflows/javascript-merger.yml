@@ -1,4 +1,4 @@
-name: Branch-wide PR Merger
+name: Javascript PR Merger
 
 on:
   push:
