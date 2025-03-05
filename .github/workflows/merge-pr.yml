@@ -35,9 +35,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          REPOSITORIES=$(gh repo list --limit 1000 --json nameWithOwner --jq '.[].nameWithOwner')
+          # Use jq to create a proper JSON array
+          REPOSITORIES=$(gh repo list --limit 1000 --json nameWithOwner | jq -r '.[] | .nameWithOwner')
+          
+          # Convert to JSON array
           REPOS_JSON=$(echo "$REPOSITORIES" | jq -R . | jq -s .)
-          echo "repos=$REPOS_JSON" >> $GITHUB_OUTPUT
+          
+          # Output the repositories
+          echo "repos<<EOF" >> $GITHUB_OUTPUT
+          echo "$REPOS_JSON" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Print total repositories
           echo "Total repositories discovered: $(echo "$REPOSITORIES" | wc -l)"
 
       - name: Find Open PRs
