@@ -30,7 +30,6 @@ jobs:
           && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
           && sudo apt update \
           && sudo apt install gh -y
-
       - name: Discover Repositories
         id: repo-list
         env:
@@ -49,8 +48,6 @@ jobs:
           
           # Print total repositories
           echo "Total repositories discovered: $(echo "$REPOSITORIES" | wc -l)"
-
-
       - name: Find Open PRs
         id: find-prs
         env:
@@ -81,7 +78,8 @@ jobs:
               echo "$REPO_PRS" | jq -r '.[] | "- #\(.number): \(.title)"'
               
               # Append to pr_details.json with repository context
-              echo "$REPO_PRS" | jq --arg repo "$repo" '.[] | . + {repository: $repo}' | jq -c '.' >> pr_details.json
+              REPO_PRS=$(echo "$REPO_PRS" | jq --arg repo "$repo" '[.[] | . + {repository: $repo}]')
+              jq -s '.[0] + .[1]' pr_details.json <(echo "$REPO_PRS") > temp.json && mv temp.json pr_details.json
               
               PR_COUNT=$((PR_COUNT + PR_COUNT_IN_REPO))
             fi
@@ -97,7 +95,6 @@ jobs:
           
           # Print summary
           echo "Total PRs found: $PR_COUNT"
-
       - name: Upload PR Details
         uses: actions/upload-artifact@v4
         with:
@@ -120,7 +117,6 @@ jobs:
           && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
           && sudo apt update \
           && sudo apt install gh -y
-
       - name: Download PR Details
         uses: actions/download-artifact@v4
         with:
@@ -136,7 +132,6 @@ jobs:
           
           echo "\nDetailed PR parsing:"
           jq '[.[] | {number, title, repository}]' pr_details.json         
-
       - name: Merge PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -182,7 +177,6 @@ jobs:
           # Print merge summary
           echo "Total PRs: $TOTAL_PRS"
           echo "Merged PRs: $MERGED_PRS"
-
       - name: Summary Report
         run: |
           echo "## PR Merge Summary 📋" >> $GITHUB_STEP_SUMMARY
