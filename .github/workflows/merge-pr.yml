@@ -53,20 +53,19 @@ jobs:
       - name: Find Open PRs
         id: find-prs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_PAT_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: |
+          # Convert the repositories to a bash array
+          readarray -t REPOSITORIES < <(echo '${{ steps.repo-list.outputs.repos }}' | jq -r '.[]')
+          
           # Initialize an empty array to store PRs
           touch pr_details.json
-          
-          # Get repositories
-          REPOSITORIES=(${{ steps.repo-list.outputs.repos }})
           
           for repo in "${REPOSITORIES[@]}"; do
             echo "Checking PRs in $repo for branch $BRANCH_NAME"
             
             # Find open PRs for the specific branch
-            # Remove the 'repository' field and only use supported fields
             REPO_PRS=$(gh pr list --repo "$repo" --base "$BRANCH_NAME" --state open --json number,title,url)
             
             # Check if any PRs exist
@@ -85,7 +84,7 @@ jobs:
           echo "pr_list=$PR_LIST" >> $GITHUB_OUTPUT
           
           # Print summary
-          echo "Total PRs found: $(echo "$PR_LIST" | jq length)"          
+          echo "Total PRs found: $(echo "$PR_LIST" | jq length)"  
 
       - name: Upload PR Details
         uses: actions/upload-artifact@v4
