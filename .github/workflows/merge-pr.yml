@@ -20,6 +20,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Print Branch Name to Scan
+        env:
+          BRANCH_NAME: ${{ inputs.branch }}
+        run: |
+          echo "Branch to scan for PRs: $BRANCH_NAME"
+
       - name: Echo image Target
         run: |
           # print out the image Target
