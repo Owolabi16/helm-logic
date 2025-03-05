@@ -7,7 +7,7 @@ on:
 
   workflow_dispatch:
     inputs:
-      branch:
+      branch_name:
         description: 'Branch name to scan and merge PRs'
         required: true
 
