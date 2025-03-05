@@ -11,6 +11,7 @@ on:
         description: 'Branch name to scan and merge PRs'
         required: true
         type: string
+        default: 'branch-test'
 
 jobs:
   discover-prs:
@@ -56,14 +57,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: |
-          # Ensure BRANCH_NAME is set, default to 'main' if not provided
-          BRANCH_NAME="${BRANCH_NAME:-main}"
-          
-          # Initialize an empty JSON file for PR details
-          echo '[]' > pr_details.json
+          # Ensure clean output file
+          > pr_details.json
           
           # Parse repositories safely
           REPOSITORIES=$(echo '${{ steps.repo-list.outputs.repos }}' | jq -r '.[]')
+          
+          # Initialize PR tracking
+          PR_COUNT=0
           
           # Iterate through repositories
           while IFS= read -r repo; do
@@ -73,12 +74,16 @@ jobs:
             REPO_PRS=$(gh pr list --repo "$repo" --base "$BRANCH_NAME" --state open --json number,title,url)
             
             # Check if any PRs exist
-            if [ "$(echo "$REPO_PRS" | jq 'length')" -gt 0 ]; then
+            PR_COUNT_IN_REPO=$(echo "$REPO_PRS" | jq 'length')
+            
+            if [ "$PR_COUNT_IN_REPO" -gt 0 ]; then
               echo "Found PRs in $repo:"
               echo "$REPO_PRS" | jq -r '.[] | "- #\(.number): \(.title)"'
               
               # Append to pr_details.json with repository context
               echo "$REPO_PRS" | jq --arg repo "$repo" '.[] | . + {repository: $repo}' | jq -c '.' >> pr_details.json
+              
+              PR_COUNT=$((PR_COUNT + PR_COUNT_IN_REPO))
             fi
           done <<< "$REPOSITORIES"
           
@@ -89,7 +94,10 @@ jobs:
           echo "pr_list=$PR_LIST" >> $GITHUB_OUTPUT
           
           # Print summary
-          echo "Total PRs found: $(echo "$PR_LIST" | jq length)" 
+          echo "Total PRs found: $PR_COUNT"
+          
+          # Ensure the output is valid JSON
+          echo "$PR_LIST" | jq empty || echo "Invalid JSON output"
 
       - name: Upload PR Details
         uses: actions/upload-artifact@v4
