@@ -130,21 +130,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Read PR details
+          # Read PR details and ensure it's a valid JSON array
           PR_LIST=$(jq -s '.' pr_details.json)
           
           # Initialize merge counters
           TOTAL_PRS=$(echo "$PR_LIST" | jq length)
           MERGED_PRS=0
           
+          # Debug: Print the entire PR_LIST to understand its structure
+          echo "PR List structure:"
+          echo "$PR_LIST" | jq .
+          
           # Merge each PR
           echo "$PR_LIST" | jq -c '.[]' | while read -r PR; do
-            REPO=$(echo "$PR" | jq -r '.repository')
-            PR_NUMBER=$(echo "$PR" | jq -r '.number')
-            PR_TITLE=$(echo "$PR" | jq -r '.title')
+            # Safely extract repository and PR details
+            REPO=$(echo "$PR" | jq -r '.repository // empty')
+            PR_NUMBER=$(echo "$PR" | jq -r '.number // empty')
+            PR_TITLE=$(echo "$PR" | jq -r '.title // empty')
+            
+            # Validate extracted values
+            if [ -z "$REPO" ] || [ -z "$PR_NUMBER" ]; then
+              echo "Skipping invalid PR entry: $PR"
+              continue
+            fi
             
             echo "Attempting to merge PR #$PR_NUMBER in $REPO: $PR_TITLE"
             
+            # Attempt to merge the PR
             if gh pr merge "$PR_NUMBER" --repo "$REPO" --merge; then
               MERGED_PRS=$((MERGED_PRS + 1))
               echo "Merged PR #$PR_NUMBER in $REPO"
