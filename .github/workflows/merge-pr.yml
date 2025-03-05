@@ -136,8 +136,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          echo "Delaying for 3 minutes before merging PRs..."
-          sleep 180  # Sleep for 180 seconds (3 minutes)
+          echo "Delaying for 1 minutes before merging PRs..."
+          sleep 180  # Sleep for 60 seconds (3 minutes)
 
           # Read the PR list
           PR_LIST=$(jq '.' pr_details.json)
