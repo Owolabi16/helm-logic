@@ -57,10 +57,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BRANCH_NAME: ${{ inputs.branch_name || 'master' }}
         run: |   
-        
-          # Ensure clean output file
-          > pr_details.json
-
+          # Ensure clean output file and create an empty JSON array
+          echo '[]' > pr_details.json
           
           # Parse repositories safely
           REPOSITORIES=$(echo '${{ steps.repo-list.outputs.repos }}' | jq -r '.[]')
@@ -93,13 +91,12 @@ jobs:
           PR_LIST=$(jq -s '.' pr_details.json)
           
           # Output PR list
-          echo "pr_list=$PR_LIST" >> $GITHUB_OUTPUT
+          echo "pr_list<<EOF" >> $GITHUB_OUTPUT
+          echo "$PR_LIST" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
           # Print summary
           echo "Total PRs found: $PR_COUNT"
-          
-          # Ensure the output is valid JSON
-          echo "$PR_LIST" | jq empty || echo "Invalid JSON output"
 
       - name: Upload PR Details
         uses: actions/upload-artifact@v4
