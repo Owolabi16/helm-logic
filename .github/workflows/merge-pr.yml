@@ -136,6 +136,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
+          echo "Delaying for 3 minutes before merging PRs..."
+          sleep 180  # Sleep for 180 seconds (3 minutes)
+          
           # Read the PR list
           PR_LIST=$(jq '.' pr_details.json)
           
@@ -171,15 +174,15 @@ jobs:
               echo "Merged PR #$PR_NUMBER in $REPO"
             else
               echo "Failed to merge PR #$PR_NUMBER in $REPO"
+              echo "Error: $(gh pr merge "$PR_NUMBER" --repo "$REPO" --merge || echo "Merge failed")"
             fi
           done
-          
-          # sleep for 3 mins
-          sleep 180
           
           # Print merge summary
           echo "Total PRs: $TOTAL_PRS"
           echo "Merged PRs: $MERGED_PRS"
+
+
       - name: Summary Report
         run: |
           echo "## PR Merge Summary 📋" >> $GITHUB_STEP_SUMMARY
