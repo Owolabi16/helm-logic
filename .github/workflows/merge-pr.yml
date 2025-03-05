@@ -126,19 +126,43 @@ jobs:
         with:
           name: pr-details
 
+      - name: Detailed PR Details Debug
+        run: |
+          echo "Raw contents of pr_details.json:"
+          cat pr_details.json
+          
+          echo "\nDetailed restructuring:"
+          jq '[.[] | 
+            select(length > 0) | 
+            {
+              number: .[0],
+              title: .[1],
+              url: .[2],
+              repository: .[3]
+            }
+          ]' pr_details.json          
+
       - name: Merge PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Filter out empty arrays and keep only valid PR entries
-          PR_LIST=$(jq '[.[] | select(length > 0)]' pr_details.json)
+          # Restructure the JSON to ensure a consistent object format
+          PR_LIST=$(jq '[.[] | 
+            select(length > 0) | 
+            {
+              number: .[0],
+              title: .[1],
+              url: .[2],
+              repository: .[3]
+            }
+          ]' pr_details.json)
           
           # Initialize merge counters
           TOTAL_PRS=$(echo "$PR_LIST" | jq length)
           MERGED_PRS=0
           
-          # Debug: Print the filtered PR_LIST
-          echo "Filtered PR List structure:"
+          # Debug: Print the restructured PR_LIST
+          echo "Restructured PR List:"
           echo "$PR_LIST" | jq .
           
           # Merge each PR
